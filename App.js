@@ -1,27 +1,132 @@
-import { Text, SafeAreaView, StyleSheet } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchUsers, addUser, deleteUser, editUser } from './redux/action/userActions,js';
 
-// You can import supported modules from npm
-import { Card } from 'react-native-paper';
+const TodoApp = () => {
+    const dispatch = useDispatch();
+    const users = useSelector(state => state.user.users);
 
-// or any files within the Snack
-import AssetExample from './components/AssetExample';
-import TodoApp from './TodoApp'
+    const [modalVisible, setModalVisible] = useState(false);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [newUser, setNewUser] = useState({ fullname: '', job: '' });
 
-export default function App() {
+    useEffect(() => {
+        dispatch(fetchUsers());
+    }, [dispatch]);
+
+    const handleAddUser = () => {
+        dispatch(addUser({...newUser, id: users.length + 1 }));
+        setNewUser({ fullname: '', job: '' });
+    };
+
+    const handleDeleteUser = (id) => {
+        dispatch(deleteUser(id));
+    };
+
+    const handleEditUser = (user) => {
+        setSelectedUser(user);
+        setModalVisible(true);
+    };
+
+    const handleSaveEditUser = () => {
+        dispatch(editUser(selectedUser));
+        setModalVisible(false);
+    };
+
     return ( <
-        SafeAreaView style = { styles.container } >
+        View style = { styles.container } >
         <
-        TodoApp / >
+        Text style = { styles.header } > Todo App < /Text>
+
+        { /* Thêm user mới */ } <
+        View style = { styles.inputContainer } >
         <
-        /SafeAreaView>
+        TextInput style = { styles.input }
+        placeholder = "Fullname"
+        value = { newUser.fullname }
+        onChangeText = {
+            (text) => setNewUser({...newUser, fullname: text }) }
+        /> <
+        TextInput style = { styles.input }
+        placeholder = "Job"
+        value = { newUser.job }
+        onChangeText = {
+            (text) => setNewUser({...newUser, job: text }) }
+        /> <
+        Button title = "Add User"
+        onPress = { handleAddUser }
+        /> <
+        /View>
+
+        { /* Danh sách users */ } <
+        FlatList data = { users }
+        keyExtractor = {
+            (item) => item.id.toString() }
+        renderItem = {
+            ({ item }) => ( <
+                View style = { styles.userContainer } >
+                <
+                TouchableOpacity onPress = {
+                    () => handleEditUser(item) }
+                style = {
+                    { flex: 1 } } >
+                <
+                Text > { item.fullname } < /Text> <
+                Text > { item.job } < /Text> <
+                /TouchableOpacity> <
+                Button title = "Delete"
+                color = "red"
+                onPress = {
+                    () => handleDeleteUser(item.id) }
+                /> <
+                /View>
+            )
+        }
+        />
+
+        { /* Modal chỉnh sửa user */ } <
+        Modal visible = { modalVisible }
+        transparent = { true }
+        animationType = "slide" >
+        <
+        View style = { styles.modalContainer } >
+        <
+        Text style = { styles.modalHeader } > Edit User < /Text> <
+        TextInput style = { styles.input }
+        placeholder = "Fullname"
+        value = { selectedUser ? .fullname }
+        onChangeText = {
+            (text) => setSelectedUser({...selectedUser, fullname: text }) }
+        /> <
+        TextInput style = { styles.input }
+        placeholder = "Job"
+        value = { selectedUser ? .job }
+        onChangeText = {
+            (text) => setSelectedUser({...selectedUser, job: text }) }
+        /> <
+        Button title = "Save Changes"
+        onPress = { handleSaveEditUser }
+        /> <
+        Button title = "Cancel"
+        color = "red"
+        onPress = {
+            () => setModalVisible(false) }
+        /> <
+        /View> <
+        /Modal> <
+        /View>
     );
-}
+};
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        justifyContent: 'center',
-        backgroundColor: '#ecf0f1',
-        padding: 8,
-    },
+    container: { flex: 1, padding: 20, backgroundColor: '#f5f5f5' },
+    header: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
+    inputContainer: { marginBottom: 20 },
+    input: { borderWidth: 1, borderColor: '#ddd', padding: 10, marginBottom: 10, borderRadius: 5 },
+    userContainer: { flexDirection: 'row', alignItems: 'center', padding: 15, borderBottomWidth: 1, borderBottomColor: '#ddd' },
+    modalContainer: { flex: 1, justifyContent: 'center', backgroundColor: 'rgba(255, 255, 255, 0.9)', padding: 20 },
+    modalHeader: { fontSize: 20, fontWeight: 'bold', marginBottom: 15, textAlign: 'center' },
 });
+
+export default TodoApp;

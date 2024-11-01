@@ -1,22 +1,17 @@
-// src/redux/store/store.js
-import { createStore, applyMiddleware, combineReducers } from 'redux';
-import createSagaMiddleware from 'redux-saga';
-import userReducer from '../reducers/userReducer';
-import userSaga from '../sagas/userSaga';
-import { all } from 'redux-saga/effects';
+import { Text, SafeAreaView, StyleSheet } from 'react-native';
 
-const sagaMiddleware = createSagaMiddleware();
+import { Provider } from 'react-redux';
+import store from './store';
+import TodoApp from './TodoApp'
 
-const rootReducer = combineReducers({
-    user: userReducer
-});
-
-const store = createStore(rootReducer, applyMiddleware(sagaMiddleware));
-
-function* rootSaga() {
-    yield all([userSaga()]);
+export default function App() {
+    return ( <
+        Provider store = { store } >
+        <
+        TodoApp / >
+        <
+        /Provider>
+    );
 }
 
-sagaMiddleware.run(rootSaga);
-
-export default store;
+const styles = StyleSheet.create({});

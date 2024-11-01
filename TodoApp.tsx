@@ -1,28 +1,36 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TextInput, Button, FlatList, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchUsers, addUser, deleteUser, editUser } from './userSlice';
 
 const TodoApp = () => {
-  // State cho danh sách users và modal
-  const [users, setUsers] = useState([{ id: 1, fullname: 'John Doe', job: 'Engineer' }]);
+  const dispatch = useDispatch();
+  const { users, loading, error } = useSelector((state) => state.users);
+
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [newUser, setNewUser] = useState({ fullname: '', job: '' });
 
-  // Thêm người dùng mới
-  const addUser = () => {
-    setUsers([...users, { ...newUser, id: users.length + 1 }]);
+  useEffect(() => {
+    dispatch(fetchUsers());
+  }, [dispatch]);
+
+  const handleAddUser = () => {
+    dispatch(addUser(newUser));
     setNewUser({ fullname: '', job: '' });
   };
 
-  // Hiển thị modal chỉnh sửa
-  const editUser = (user) => {
+  const handleDeleteUser = (id) => {
+    dispatch(deleteUser(id));
+  };
+
+  const handleEditUser = (user) => {
     setSelectedUser(user);
     setModalVisible(true);
   };
 
-  // Lưu thông tin sau khi chỉnh sửa
-  const saveEditUser = () => {
-    setUsers(users.map(user => user.id === selectedUser.id ? selectedUser : user));
+  const handleSaveEditUser = () => {
+    dispatch(editUser(selectedUser));
     setModalVisible(false);
   };
 
@@ -30,7 +38,10 @@ const TodoApp = () => {
     <View style={styles.container}>
       <Text style={styles.header}>Todo App</Text>
 
-      {/* Thêm người dùng mới */}
+      {loading && <Text>Loading...</Text>}
+      {error && <Text>Error: {error}</Text>}
+
+      {/* Thêm user mới */}
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
@@ -44,7 +55,7 @@ const TodoApp = () => {
           value={newUser.job}
           onChangeText={(text) => setNewUser({ ...newUser, job: text })}
         />
-        <Button title="Add User" onPress={addUser} />
+        <Button title="Add User" onPress={handleAddUser} />
       </View>
 
       {/* Danh sách users */}
@@ -52,12 +63,13 @@ const TodoApp = () => {
         data={users}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => editUser(item)}>
-            <View style={styles.userContainer}>
+          <View style={styles.userContainer}>
+            <TouchableOpacity onPress={() => handleEditUser(item)} style={{ flex: 1 }}>
               <Text>{item.fullname}</Text>
               <Text>{item.job}</Text>
-            </View>
-          </TouchableOpacity>
+            </TouchableOpacity>
+            <Button title="Delete" color="red" onPress={() => handleDeleteUser(item.id)} />
+          </View>
         )}
       />
 
@@ -77,7 +89,7 @@ const TodoApp = () => {
             value={selectedUser?.job}
             onChangeText={(text) => setSelectedUser({ ...selectedUser, job: text })}
           />
-          <Button title="Save Changes" onPress={saveEditUser} />
+          <Button title="Save Changes" onPress={handleSaveEditUser} />
           <Button title="Cancel" color="red" onPress={() => setModalVisible(false)} />
         </View>
       </Modal>
@@ -90,7 +102,7 @@ const styles = StyleSheet.create({
   header: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
   inputContainer: { marginBottom: 20 },
   input: { borderWidth: 1, borderColor: '#ddd', padding: 10, marginBottom: 10, borderRadius: 5 },
-  userContainer: { padding: 15, borderBottomWidth: 1, borderBottomColor: '#ddd' },
+  userContainer: { flexDirection: 'row', alignItems: 'center', padding: 15, borderBottomWidth: 1, borderBottomColor: '#ddd' },
   modalContainer: { flex: 1, justifyContent: 'center', backgroundColor: 'rgba(255, 255, 255, 0.9)', padding: 20 },
   modalHeader: { fontSize: 20, fontWeight: 'bold', marginBottom: 15, textAlign: 'center' },
 });
